@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { aggregate } from "../src/aggregate.js";
@@ -92,4 +92,25 @@ test("day buckets use local dates consistent with range cutoffs", async () => {
   const out = await aggregate(root);
   const local = `${early.getFullYear()}-${String(early.getMonth() + 1).padStart(2, "0")}-${String(early.getDate()).padStart(2, "0")}`;
   assert.deepEqual(Object.keys(out.daysRange.today), [local]);
+});
+
+test("project labels hide absolute paths and stay relative to the given root", async () => {
+  const root = await mkdtemp(join(tmpdir(), "pi-stats-proj-"));
+  await mkdir(join(root, "-Users-someone-secret-project-"), { recursive: true });
+  const header = JSON.stringify({ type: "session", version: 3, id: "s" });
+  const asst = JSON.stringify({ type: "message", id: "a1", timestamp: new Date().toISOString(), message: { role: "assistant", provider: "p", model: "m", usage: { input: 1, output: 1, totalTokens: 2 }, stopReason: "stop", content: [] } });
+  await writeFile(join(root, "-Users-someone-secret-project-", "s.jsonl"), [header, asst].join("\n"));
+  const out = await aggregate(root);
+  const keys = Object.keys(out.by.project);
+  assert.equal(keys.length, 1);
+  assert.ok(keys[0].startsWith("project · "), keys[0]);
+  assert.ok(!keys[0].includes("/"), keys[0]);
+  assert.ok(!keys[0].includes("someone"), keys[0]);
+});
+
+test("unreadable session files are skipped instead of throwing", async () => {
+  const root = await mkdtemp(join(tmpdir(), "pi-stats-broken-"));
+  await symlink(join(root, "does-not-exist.jsonl"), join(root, "broken.jsonl"));
+  const out = await aggregate(root);
+  assert.equal(out.diagnostics.unreadableFiles, 1);
 });
