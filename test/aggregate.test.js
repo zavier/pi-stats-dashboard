@@ -52,3 +52,44 @@ test("range breakdowns exclude records outside the selected range", async () => 
   assert.equal(out.seriesRange.today[day].model["p-new-model/new-model"], 20);
   assert.equal(out.seriesRange.today[oldDay], undefined);
 });
+
+test("token totals use usage.totalTokens and keep reasoning separate", async () => {
+  const root = await mkdtemp(join(tmpdir(), "pi-stats-tok-"));
+  await mkdir(join(root, "project"), { recursive: true });
+  const header = JSON.stringify({ type: "session", version: 3, id: "s" });
+  // reasoning is recorded but excluded from totalTokens by Pi
+  const usage = { input: 100, output: 40, reasoning: 25, cacheRead: 10, cacheWrite: 0, totalTokens: 150, cost: { total: 0.5 } };
+  const user = JSON.stringify({ type: "message", id: "u1", timestamp: new Date().toISOString(), message: { role: "user", content: [{ type: "text", text: "please fix this" }] } });
+  const asst = JSON.stringify({ type: "message", id: "a1", timestamp: new Date().toISOString(), message: { role: "assistant", provider: "p", model: "m", usage, stopReason: "stop", content: [] } });
+  await writeFile(join(root, "project", "one.jsonl"), [header, user, asst].join("\n"));
+  await writeFile(join(root, "project", "two.jsonl"), [header, user, asst].join("\n")); // forked copy
+  const out = await aggregate(root);
+  assert.equal(out.totals.all.requests, 1);
+  assert.equal(out.totals.all.tokens, 150); // not 175
+  assert.equal(out.totals.all.reasoning, 25); // still recorded for display
+  assert.equal(out.behavior.messages, 1); // forked user message counted once
+});
+
+test("token totals fall back to component sum when totalTokens is absent", async () => {
+  const root = await mkdtemp(join(tmpdir(), "pi-stats-fb-"));
+  await mkdir(join(root, "project"), { recursive: true });
+  const header = JSON.stringify({ type: "session", version: 3, id: "s" });
+  const usage = { input: 7, output: 3, cacheRead: 5, cacheWrite: 2 };
+  const asst = JSON.stringify({ type: "message", id: "a1", timestamp: new Date().toISOString(), message: { role: "assistant", provider: "p", model: "m", usage, stopReason: "stop", content: [] } });
+  await writeFile(join(root, "project", "s.jsonl"), [header, asst].join("\n"));
+  const out = await aggregate(root);
+  assert.equal(out.totals.all.tokens, 17);
+});
+
+test("day buckets use local dates consistent with range cutoffs", async () => {
+  const root = await mkdtemp(join(tmpdir(), "pi-stats-tz-"));
+  await mkdir(join(root, "project"), { recursive: true });
+  const header = JSON.stringify({ type: "session", version: 3, id: "s" });
+  const early = new Date();
+  early.setHours(0, 30, 0, 0); // 00:30 local today
+  const asst = JSON.stringify({ type: "message", id: "a1", timestamp: early.toISOString(), message: { role: "assistant", provider: "p", model: "m", usage: { input: 1, output: 1, totalTokens: 2 }, stopReason: "stop", content: [] } });
+  await writeFile(join(root, "project", "s.jsonl"), [header, asst].join("\n"));
+  const out = await aggregate(root);
+  const local = `${early.getFullYear()}-${String(early.getMonth() + 1).padStart(2, "0")}-${String(early.getDate()).padStart(2, "0")}`;
+  assert.deepEqual(Object.keys(out.daysRange.today), [local]);
+});
