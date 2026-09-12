@@ -1,0 +1,157 @@
+- main [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e6]:
+      - strong [ref=e7]: pi / stats
+      - generic [ref=e8]: local telemetry
+    - tablist "Dashboard sections" [ref=e9]:
+      - tab "Overview" [selected] [ref=e10] [cursor=pointer]:
+        - generic [ref=e11]: ◈
+        - text: Overview
+      - tab "Models" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: ◇
+        - text: Models
+      - tab "Providers" [ref=e14] [cursor=pointer]:
+        - generic [ref=e15]: ⌁
+        - text: Providers
+      - tab "Projects" [ref=e16] [cursor=pointer]:
+        - generic [ref=e17]: ▦
+        - text: Projects
+      - tab "Agents" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: ◎
+        - text: Agents
+      - tab "Tools" [ref=e20] [cursor=pointer]:
+        - generic [ref=e21]: ⌘
+        - text: Tools
+    - generic [ref=e22]:
+      - text: ● LOCAL ONLY
+      - text: privacy-first telemetry
+  - generic [ref=e23]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]: Local observability / pi agent
+        - heading "Usage overview" [level=1] [ref=e27]
+        - paragraph [ref=e28]: Sessions, models, and token spend — without sending your telemetry anywhere.
+      - generic [ref=e29]:
+        - generic [ref=e32]: SYNCED JUST NOW
+        - combobox "Date range" [ref=e34]:
+          - option "Lifetime" [selected]
+          - option "Today"
+          - option "Last 7 days"
+          - option "Last 30 days"
+    - generic [ref=e35]:
+      - generic [ref=e37]:
+        - heading "Overview" [level=2] [ref=e38]
+        - generic [ref=e39]: All recorded time
+      - generic [ref=e40]:
+        - article [ref=e41]:
+          - generic [ref=e42]: Total tokens
+          - generic [ref=e43]: 468,436,075
+          - generic [ref=e44]: input + output + cache
+        - article [ref=e45]:
+          - generic [ref=e46]: Requests
+          - generic [ref=e47]: 4,954
+          - generic [ref=e48]: total calls
+        - article [ref=e49]:
+          - generic [ref=e50]: Input tokens
+          - generic [ref=e51]: 7,613,606
+          - generic [ref=e52]: prompt tokens
+        - article [ref=e53]:
+          - generic [ref=e54]: Output tokens
+          - generic [ref=e55]: 3,472,838
+          - generic [ref=e56]: completion tokens
+        - article [ref=e57]:
+          - generic [ref=e58]: Cache reads
+          - generic [ref=e59]: 457,349,631
+          - generic [ref=e60]: cached input tokens
+        - article [ref=e61]:
+          - generic [ref=e62]: Cache writes
+          - generic [ref=e63]: "0"
+          - generic [ref=e64]: cache creation tokens
+        - article [ref=e65]:
+          - generic [ref=e66]: Recorded cost
+          - generic [ref=e67]: $5.0934
+          - generic [ref=e68]: provider estimate
+        - article [ref=e69]:
+          - generic [ref=e70]: Errors
+          - generic [ref=e71]: "331"
+          - generic [ref=e72]: failed responses
+      - generic [ref=e73]:
+        - generic [ref=e74]:
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - heading "Daily activity" [level=3] [ref=e77]
+              - text: 70,942,468 tokens · last 14 days
+            - group "Group by" [ref=e78]:
+              - button "Models" [pressed] [ref=e79] [cursor=pointer]
+              - button "Providers" [ref=e80] [cursor=pointer]
+          - generic [ref=e81]:
+            - generic [ref=e82]:
+              - generic [ref=e83]: "0"
+              - generic [ref=e84]: 20M
+              - generic [ref=e85]: 40M
+              - generic [ref=e86]: 60M
+            - generic [ref=e92]:
+              - 'img "2026-08-30: 7,603,211 tokens" [ref=e93]'
+              - 'img "2026-08-31: 2,404,437 tokens" [ref=e96]'
+              - 'img "2026-09-01: 0 tokens" [ref=e99]'
+              - 'img "2026-09-02: 0 tokens" [ref=e102]'
+              - 'img "2026-09-03: 0 tokens" [ref=e105]'
+              - 'img "2026-09-04: 0 tokens" [ref=e108]'
+              - 'img "2026-09-05: 0 tokens" [ref=e111]'
+              - 'img "2026-09-06: 0 tokens" [ref=e114]'
+              - 'img "2026-09-07: 0 tokens" [ref=e117]'
+              - 'img "2026-09-08: 0 tokens" [ref=e120]'
+              - 'img "2026-09-09: 0 tokens" [ref=e123]'
+              - 'img "2026-09-10: 0 tokens" [ref=e126]'
+              - 'img "2026-09-11: 14,799,350 tokens" [ref=e129]'
+              - 'img "2026-09-12: 46,135,470 tokens" [ref=e133]'
+            - generic [ref=e136]:
+              - generic [ref=e137]: 08-30
+              - generic [ref=e140]: 09-02
+              - generic [ref=e142]: 09-04
+              - generic [ref=e145]: 09-07
+              - generic [ref=e147]: 09-09
+              - generic [ref=e150]: 09-12
+          - generic [ref=e151]:
+            - generic [ref=e152]: deepseek/deepseek-flash
+            - generic [ref=e154]: deepseek/deepseek-v4-flash
+        - generic [ref=e156]:
+          - generic [ref=e157]:
+            - heading "Top contributors" [level=3] [ref=e158]
+            - generic [ref=e159]: by tokens
+          - generic [ref=e160]:
+            - generic [ref=e162]:
+              - generic [ref=e163]: deepseek/deepseek-v4-flash
+              - strong [ref=e164]: 294,736,966
+            - generic [ref=e168]:
+              - generic [ref=e169]: deepseek/deepseek-v4-pro
+              - strong [ref=e170]: 97,021,456
+            - generic [ref=e174]:
+              - generic [ref=e175]: deepseek/deepseek-flash
+              - strong [ref=e176]: 60,872,035
+            - generic [ref=e180]:
+              - generic [ref=e181]: kimi-coding/k3-256k
+              - strong [ref=e182]: 15,158,599
+            - generic [ref=e186]:
+              - generic [ref=e187]: kimi-coding/kimi-for-coding
+              - strong [ref=e188]: 647,019
+      - generic [ref=e192]:
+        - generic [ref=e193]:
+          - heading "Token mix" [level=3] [ref=e194]
+          - generic [ref=e195]: volume by type
+        - generic [ref=e196]:
+          - generic [ref=e198]:
+            - generic [ref=e199]: Input
+            - strong [ref=e200]: 7,613,606
+          - generic [ref=e204]:
+            - generic [ref=e205]: Output
+            - strong [ref=e206]: 3,472,838
+          - generic [ref=e210]:
+            - generic [ref=e211]: Cache read
+            - strong [ref=e212]: 457,349,631
+          - generic [ref=e216]:
+            - generic [ref=e217]: Reasoning
+            - strong [ref=e218]: 1,594,554
+        - paragraph [ref=e221]: Reasoning is reported separately and is not part of the token total.
+      - group [ref=e222]:
+        - generic "Data health & limitations" [ref=e223] [cursor=pointer]

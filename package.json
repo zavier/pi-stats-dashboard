@@ -1,7 +1,7 @@
 {
   "name": "pi-stats-dashboard",
   "version": "0.1.3",
-  "description": "Local usage and behavior dashboard for Pi agent sessions",
+  "description": "Local usage dashboard for Pi agent sessions",
   "type": "module",
   "keywords": [
     "pi-package",
@@ -29,7 +29,7 @@
   ],
   "scripts": {
     "test": "node --test",
-    "check": "node --check extensions/stats.js && node --check src/aggregate.js && node --check src/behavior.js && node --check src/server.js"
+    "check": "node --check extensions/stats.js && node --check src/aggregate.js && node --check src/server.js"
   },
   "pi": {
     "extensions": [

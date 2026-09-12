@@ -12,7 +12,7 @@ test("aggregates sessions, forks, transcripts, tools and warnings", async () => 
   await mkdir(join(root, "project"), { recursive: true });
   const a = { type: "message", id: "a1", timestamp: new Date().toISOString(), message: { role: "assistant", provider: "p", model: "m", usage: u(10), stopReason: "stop", content: [{ type: "toolCall", id: "t", name: "bash", arguments: {} }] } };
   const header = JSON.stringify({ type: "session", version: 3, id: "s" });
-  await writeFile(join(root, "project", "a.jsonl"), [header, JSON.stringify({ type: "message", id: "u", timestamp: new Date().toISOString(), message: { role: "user", content: [{ type: "text", text: "NOOO!!! you forgot" }] } }), JSON.stringify(a), "bad json", JSON.stringify({ type: "compaction", id: "c", timestamp: new Date().toISOString(), usage: u(2) })].join("\n"));
+  await writeFile(join(root, "project", "a.jsonl"), [header, JSON.stringify(a), "bad json", JSON.stringify({ type: "compaction", id: "c", timestamp: new Date().toISOString(), usage: u(2) })].join("\n"));
   await writeFile(join(root, "project", "fork.jsonl"), [header, JSON.stringify(a)].join("\n"));
   await mkdir(join(root, "project", "subagent-artifacts"));
   await writeFile(join(root, "project", "subagent-artifacts", "x_transcript.jsonl"), JSON.stringify({ recordType: "message", role: "assistant", runId: "r", timestamp: Date.now(), provider: "p", model: "m2", usage: u(3) }));
@@ -20,8 +20,6 @@ test("aggregates sessions, forks, transcripts, tools and warnings", async () => 
   assert.equal(out.totals.all.requests, 3);
   assert.equal(out.totals.all.input, 15);
   assert.equal(out.diagnostics.invalidLines, 1);
-  assert.equal(out.behavior.messages, 1);
-  assert.ok(out.behavior.anguish > 0);
   assert.equal(out.by.tool.bash.requests, 1);
 });
 
@@ -59,15 +57,13 @@ test("token totals use usage.totalTokens and keep reasoning separate", async () 
   const header = JSON.stringify({ type: "session", version: 3, id: "s" });
   // reasoning is recorded but excluded from totalTokens by Pi
   const usage = { input: 100, output: 40, reasoning: 25, cacheRead: 10, cacheWrite: 0, totalTokens: 150, cost: { total: 0.5 } };
-  const user = JSON.stringify({ type: "message", id: "u1", timestamp: new Date().toISOString(), message: { role: "user", content: [{ type: "text", text: "please fix this" }] } });
   const asst = JSON.stringify({ type: "message", id: "a1", timestamp: new Date().toISOString(), message: { role: "assistant", provider: "p", model: "m", usage, stopReason: "stop", content: [] } });
-  await writeFile(join(root, "project", "one.jsonl"), [header, user, asst].join("\n"));
-  await writeFile(join(root, "project", "two.jsonl"), [header, user, asst].join("\n")); // forked copy
+  await writeFile(join(root, "project", "one.jsonl"), [header, asst].join("\n"));
+  await writeFile(join(root, "project", "two.jsonl"), [header, asst].join("\n")); // forked copy
   const out = await aggregate(root);
   assert.equal(out.totals.all.requests, 1);
   assert.equal(out.totals.all.tokens, 150); // not 175
   assert.equal(out.totals.all.reasoning, 25); // still recorded for display
-  assert.equal(out.behavior.messages, 1); // forked user message counted once
 });
 
 test("token totals fall back to component sum when totalTokens is absent", async () => {
