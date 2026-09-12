@@ -75,15 +75,31 @@
     .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 23px; }
     .panel h3 { margin: 0; font-size: 14px; letter-spacing: -.015em; }
     .panel-head small { color: var(--dim); font: 10px "SFMono-Regular", Consolas, monospace; letter-spacing: .06em; text-transform: uppercase; }
-    .bars { display: flex; align-items: end; gap: clamp(5px, 1.3vw, 14px); height: 232px; padding: 0 2px; border-bottom: 1px solid var(--line); }
-    .bar-col { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: end; min-width: 0; height: 100%; gap: 9px; }
-    .bar { display: flex; flex-direction: column; justify-content: flex-end; width: min(100%, 32px); min-height: 3px; overflow: hidden; border-radius: 4px 4px 1px 1px; transition: filter .18s ease, transform .18s ease; }
+    .chart-wrap { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 236px auto; column-gap: 10px; }
+    .chart-y { position: relative; width: 46px; color: var(--dim); font: 10px/1 "SFMono-Regular", Consolas, monospace; font-variant-numeric: tabular-nums; }
+    .chart-y span { position: absolute; right: 0; transform: translateY(-50%); white-space: nowrap; }
+    .chart-plot { position: relative; }
+    .gridline { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line); }
+    .bars { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: clamp(4px, 1vw, 12px); }
+    .bar-col { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: flex-end; min-width: 0; height: 100%; }
+    .bar { display: flex; flex-direction: column; justify-content: flex-end; width: min(100%, 30px); min-height: 2px; overflow: hidden; border-radius: 3px 3px 0 0; transition: filter .15s ease; }
     .bar i { display: block; width: 100%; min-height: 1px; }
-    .bar-col:hover .bar { filter: brightness(1.3); transform: scaleY(1.03); transform-origin: bottom; }
-    .bar-col span { overflow: hidden; max-width: 100%; color: var(--dim); font: 10px "SFMono-Regular", Consolas, monospace; white-space: nowrap; }
+    .bar-col:hover .bar { filter: brightness(1.25); }
+    .chart-x { grid-column: 2; display: flex; gap: clamp(4px, 1vw, 12px); margin-top: 9px; color: var(--dim); font: 10px "SFMono-Regular", Consolas, monospace; }
+    .chart-x span { flex: 1; min-width: 0; overflow: hidden; text-align: center; white-space: nowrap; }
+    .hoverline { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--line-bright); pointer-events: none; }
+    .tip { position: absolute; z-index: 3; min-width: 172px; padding: 11px 13px; border: 1px solid var(--line-bright); border-radius: 9px; background: var(--surface-soft); box-shadow: 0 14px 34px #0009; pointer-events: none; }
+    .tip b { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 8px; font-size: 12px; }
+    .tip .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 2px 0; color: var(--muted); font-size: 11px; }
+    .tip .row span { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+    .tip .row em { overflow: hidden; max-width: 150px; text-overflow: ellipsis; white-space: nowrap; font-style: normal; }
+    .tip .row i { flex: none; width: 9px; height: 9px; border-radius: 2px; }
     .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 15px; color: var(--dim); font: 10px "SFMono-Regular", Consolas, monospace; letter-spacing: .04em; }
     .legend span { display: inline-flex; align-items: center; gap: 6px; }
     .legend i { width: 9px; height: 9px; border-radius: 2px; }
+    .toggle { display: inline-flex; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-raised); }
+    .toggle button { padding: 5px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font: 10px "SFMono-Regular", Consolas, monospace; letter-spacing: .06em; text-transform: uppercase; }
+    .toggle button[aria-selected="true"] { background: var(--lime); color: #11150f; font-weight: 700; }
     .stat-list { display: grid; gap: 17px; }
     .stat-line { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
     .stat-line .name { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
@@ -122,8 +138,8 @@
       .card { min-height: 112px; padding: 15px; }
       .card .value { margin-top: 14px; font-size: 24px; }
       .panel { padding: 16px; }
-      .bars { height: 190px; gap: 4px; }
-      .bar-col span { font-size: 9px; }
+      .chart-wrap { grid-template-rows: 190px auto; }
+      .bars, .chart-x { gap: 4px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
@@ -147,12 +163,27 @@
   </main>
   <script>
     const token = "__TOKEN__", tabs = [['Overview','◈'],['Models','◇'],['Providers','⌁'],['Projects','▦'],['Agents','◎'],['Tools','⌘'],['Behavior','◌']];
-    let data = __DATA__, active = 0;
+    let data = __DATA__, active = 0, chartDim = 'model';
     const nav = document.querySelector('.nav'), app = document.querySelector('#app');
     tabs.forEach(([name, icon], i) => { const b = document.createElement('button'); b.innerHTML = `<span aria-hidden="true">${icon}</span>${name}`; b.setAttribute('role','tab'); b.setAttribute('aria-selected', i === 0); b.onclick = () => { active = i; render(); }; nav.append(b); });
     const fmt = n => Intl.NumberFormat().format(Math.round(n || 0)), money = n => '$' + (n || 0).toFixed(4), esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function cards(o) { return `<div class="cards">${[['Requests',fmt(o.requests),'total calls'],['Input tokens',fmt(o.input),'prompt tokens'],['Output tokens',fmt(o.output),'completion tokens'],['Cache reads',fmt(o.cacheRead),'cached input tokens'],['Recorded cost',money(o.cost),'provider estimate'],['Errors',fmt(o.errors),'failed responses']].map(x => `<article class="card"><div class="label">${x[0]}</div><div class="value">${x[1]}</div><div class="sub">${x[2]}</div></article>`).join('')}</div>`; }
-    function chart(range) { const dr = (data.daysRange && data.daysRange[range]) || data.days, entries = Object.entries(dr).slice(range === 'all' ? -14 : -31), max = Math.max(1, ...entries.map(([,v]) => v.tokens)), parts = [['Input','input','var(--blue)'],['Output','output','var(--lime)'],['Cache read','cacheRead','var(--orange)'],['Cache write','cacheWrite','var(--teal)'],['Reasoning','reasoning','var(--violet)']]; return `<div class="panel"><div class="panel-head"><h3>Daily activity</h3><small>tokens / day</small></div>${entries.length ? `<div class="bars">${entries.map(([d,v]) => { const total = v.tokens || 0, segs = parts.filter(([,k]) => v[k] > 0), detail = segs.map(([label,k]) => `${label} ${fmt(v[k])}`).join(', '); return `<div class="bar-col" title="${esc(d)}: ${fmt(total)} tokens${detail ? ' (' + esc(detail) + ')' : ''}"><div class="bar" style="height:${Math.max(2, total / max * 82)}%">${segs.map(([,k,c]) => `<i style="height:${v[k] / Math.max(1, total) * 100}%;background:${c}"></i>`).join('') || '<i style="height:100%;background:var(--blue)"></i>'}</div><span>${d.slice(5)}</span></div>`; }).join('')}</div><div class="legend">${parts.map(([label,,c]) => `<span><i style="background:${c}"></i>${label}</span>`).join('')}</div>` : '<div class="empty">No token usage recorded yet.</div>'}</div>`; }
+    const SERIES_COLORS = ['#c7f36a','#8bb9ff','#f3bc72','#d3adff','#74d4c8','#ff928d'], OTHER = '__other__';
+    const fmtCompact = n => new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+    function niceAxis(maxValue) { const raw = Math.max(1, maxValue) / 4, mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag, step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag, top = Math.max(step, Math.ceil(Math.max(1, maxValue) / step) * step), ticks = []; for (let v = 0; v <= top + step * 1e-6; v += step) ticks.push(v); return { top, ticks }; }
+    function chart(range) {
+      const dr = (data.daysRange && data.daysRange[range]) || data.days, series = (data.seriesRange && data.seriesRange[range]) || {}, entries = Object.entries(dr).slice(range === 'all' ? -14 : -31);
+      if (!entries.length) return `<div class="panel"><div class="panel-head"><h3>Daily activity</h3><small>token usage</small></div><div class="empty">No token usage recorded yet.</div></div>`;
+      const totals = new Map();
+      for (const [d] of entries) { const s = (series[d] && series[d][chartDim]) || {}; for (const k in s) totals.set(k, (totals.get(k) || 0) + s[k]); }
+      const ranked = [...totals].sort((a, b) => b[1] - a[1]), shown = ranked.slice(0, 6).map(([k]) => k), order = ranked.length > 6 ? [...shown, OTHER] : shown, colorOf = k => k === OTHER ? 'var(--dim)' : SERIES_COLORS[shown.indexOf(k) % SERIES_COLORS.length];
+      const valueOf = (s, k) => { if (k !== OTHER) return (s && s[k]) || 0; let sum = 0; for (const kk in s) if (!shown.includes(kk)) sum += s[kk]; return sum; };
+      const maxDay = Math.max(1, ...entries.map(([, v]) => v.tokens)), axis = niceAxis(maxDay), rangeTotal = entries.reduce((a, [, v]) => a + (v.tokens || 0), 0), labelCount = Math.min(entries.length, 6), labelIdx = new Set(Array.from({ length: labelCount }, (_, k) => Math.round(k * (entries.length - 1) / Math.max(1, labelCount - 1))));
+      const grid = axis.ticks.map(v => `<span class="gridline" style="top:${(1 - v / axis.top) * 100}%"></span>`).join(''), yLabels = axis.ticks.map(v => `<span style="top:${(1 - v / axis.top) * 100}%">${fmtCompact(v)}</span>`).join('');
+      const bars = entries.map(([d, v]) => { const s = (series[d] && series[d][chartDim]) || {}, total = v.tokens || 0, segs = order.map(k => { const val = valueOf(s, k); return val > 0 ? `<i style="height:${val / Math.max(1, total) * 100}%;background:${colorOf(k)}"></i>` : ''; }).join(''), rows = order.map(k => { const val = valueOf(s, k); return val > 0 ? `<div class="row"><span><i style="background:${colorOf(k)}"></i><em>${esc(k === OTHER ? 'Other' : k)}</em></span><strong>${fmt(val)}</strong></div>` : ''; }).join(''); return `<div class="bar-col" data-day="${esc(d)}"><div class="bar" style="height:${Math.max(1, total / axis.top * 100)}%">${segs || '<i style="height:100%;background:var(--line)"></i>'}</div><template class="tip-data"><b><span>${esc(d)}</span><span>${fmt(total)}</span></b>${rows || '<div class="row">No tokens</div>'}</template></div>`; }).join('');
+      const xLabels = entries.map(([d], i) => `<span>${labelIdx.has(i) ? d.slice(5) : ''}</span>`).join(''), legend = order.map(k => `<span><i style="background:${colorOf(k)}"></i>${esc(k === OTHER ? 'Other' : k)}</span>`).join('');
+      return `<div class="panel"><div class="panel-head"><div><h3>Daily activity</h3><small>${fmt(rangeTotal)} tokens</small></div><div class="toggle" role="tablist" aria-label="Group by"><button data-dim="model" aria-selected="${chartDim === 'model'}">Models</button><button data-dim="provider" aria-selected="${chartDim === 'provider'}">Providers</button></div></div><div class="chart-wrap"><div class="chart-y">${yLabels}</div><div class="chart-plot"><div class="grid">${grid}</div><div class="bars">${bars}</div><div class="hoverline" hidden></div><div class="tip" hidden></div></div><div class="chart-x">${xLabels}</div></div><div class="legend">${legend}</div></div>`;
+    }
     function leaders(obj) { const rows = Object.entries(obj).sort((a,b) => b[1].tokens - a[1].tokens).slice(0,5), max = Math.max(1, ...rows.map(([,v]) => v.tokens)); return `<div class="panel"><div class="panel-head"><h3>Top contributors</h3><small>by tokens</small></div>${rows.length ? `<div class="stat-list">${rows.map(([k,v]) => `<div><div class="stat-line"><span class="name">${esc(k)}</span><strong>${fmt(v.tokens)}</strong></div><div class="meter"><i style="width:${v.tokens / max * 100}%"></i></div></div>`).join('')}</div>` : '<div class="empty">No data for this range.</div>'}</div>`; }
     function table(obj) { const rows = Object.entries(obj).sort((a,b) => b[1].tokens - a[1].tokens); return rows.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Requests</th><th>Input</th><th>Output</th><th>Cache reads</th><th>Tokens</th><th>Cost</th><th>Errors</th></tr></thead><tbody>${rows.map(([k,v]) => `<tr><td>${esc(k)}</td><td>${fmt(v.requests)}</td><td>${fmt(v.input)}</td><td>${fmt(v.output)}</td><td>${fmt(v.cacheRead)}</td><td>${fmt(v.tokens)}</td><td>${money(v.cost)}</td><td>${fmt(v.errors)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No records in this view yet.</div>'; }
     function behavior(b) { return `<div class="cards">${Object.entries(b).filter(([k]) => k !== 'chars' && k !== 'words').map(([k,v]) => `<article class="card"><div class="label">${esc(k)}</div><div class="value">${fmt(v)}</div></article>`).join('')}</div><p class="note">Behavior counters are computed in memory from user messages. Prompt text is never retained.</p>`; }
@@ -160,6 +191,11 @@
     function health() { const d = data.diagnostics || {}; return `<div class="panel"><div class="panel-head"><h3>Data health</h3><small>ingestion status</small></div><div class="stat-list"><div class="stat-line"><span class="name">Session files scanned</span><strong>${fmt(d.files)}</strong></div><div class="stat-line"><span class="name">Standard sessions</span><strong>${fmt(d.standardSessions)}</strong></div><div class="stat-line"><span class="name">Invalid lines</span><strong class="${d.invalidLines ? 'error' : ''}">${fmt(d.invalidLines)}</strong></div><div class="stat-line"><span class="name">Skipped records</span><strong>${fmt(d.skippedRecords)}</strong></div></div></div>`; }
     function render() { [...nav.children].forEach((b,i) => b.setAttribute('aria-selected', i === active)); const range = document.querySelector('#range').value, o = data.ranges[range] || data.totals.all, by = (data.byRange && data.byRange[range]) || data.by; if (active === 0) app.innerHTML = `<div class="overview"><div><h2>Overview</h2><div class="range">${range === 'all' ? 'All recorded time' : `Showing ${range} activity`}</div></div></div>${cards(o)}<div class="grid">${chart(range)}${leaders(by.model)}</div><div class="grid">${tokenMix(o)}${health()}</div><div class="section"><h2>Provider breakdown</h2>${table(by.provider)}</div>`; else if (active === 6) app.innerHTML = `<div class="overview"><div><h2>Conversation behavior</h2><div class="range">Patterns, not transcripts</div></div></div>${behavior(data.behavior)}`; else { const key = ['model','provider','project','agent','tool'][active - 1]; app.innerHTML = `<div class="overview"><div><h2>${tabs[active][0]}</h2><div class="range">${range === 'all' ? 'All recorded time' : `Showing ${range} activity`}</div></div></div>${table(by[key])}<p class="note">Unsupported historical metrics: latency, TTFT, tokens/sec, subscription windows.</p>`; } }
     async function load() { try { const r = await fetch('/api/stats?token=' + encodeURIComponent(token)); if (!r.ok) throw Error('API returned ' + r.status); data = await r.json(); render(); } catch (e) { app.innerHTML = `<div class="empty error">Unable to load live stats: ${esc(e.message)}</div>`; } }
+    app.addEventListener('click', e => { const b = e.target.closest('.toggle button'); if (b) { chartDim = b.dataset.dim; render(); } });
+    app.addEventListener('mouseover', e => { const col = e.target.closest('.bar-col'); if (col) showTip(col); });
+    app.addEventListener('mouseout', e => { const col = e.target.closest('.bar-col'); if (!col) return; if (e.relatedTarget && col.contains(e.relatedTarget)) return; hideTip(col.closest('.chart-plot')); });
+    function showTip(col) { const plot = col.closest('.chart-plot'); if (!plot) return; const tip = plot.querySelector('.tip'), line = plot.querySelector('.hoverline'), tpl = col.querySelector('template.tip-data'); if (!tip || !tpl || !line) return; tip.innerHTML = tpl.innerHTML; const pr = plot.getBoundingClientRect(), cr = col.getBoundingClientRect(), cx = cr.left - pr.left + cr.width / 2; line.style.left = cx + 'px'; line.hidden = false; tip.hidden = false; const tw = tip.offsetWidth, th = tip.offsetHeight; let left = cx + 14; if (left + tw > pr.width - 4) left = cx - tw - 14; left = Math.max(4, Math.min(left, pr.width - tw - 4)); let top = (cr.top - pr.top) + (cr.height - th) / 2; top = Math.max(4, Math.min(top, pr.height - th - 4)); tip.style.left = left + 'px'; tip.style.top = top + 'px'; }
+    function hideTip(plot) { if (!plot) return; const tip = plot.querySelector('.tip'), line = plot.querySelector('.hoverline'); if (tip) tip.hidden = true; if (line) line.hidden = true; }
     document.querySelector('#range').onchange = render; render(); load(); setInterval(load, 30000);
   </script>
 </body>

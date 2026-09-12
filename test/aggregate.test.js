@@ -45,4 +45,10 @@ test("range breakdowns exclude records outside the selected range", async () => 
   assert.equal(out.byRange.today.tool.oldtool, undefined);
   assert.equal(Object.keys(out.daysRange.today).length, 1);
   assert.ok(out.daysRange.all[new Date(old).toISOString().slice(0, 10)].requests > 0);
+  const day = new Date(now).toISOString().slice(0, 10), oldDay = new Date(old).toISOString().slice(0, 10);
+  assert.equal(out.seriesRange.all[day].model["p-new-model/new-model"], 20);
+  assert.equal(out.seriesRange.all[day].provider["p-new-model"], 20);
+  assert.equal(out.seriesRange.all[oldDay].model["p-old-model/old-model"], 10);
+  assert.equal(out.seriesRange.today[day].model["p-new-model/new-model"], 20);
+  assert.equal(out.seriesRange.today[oldDay], undefined);
 });
