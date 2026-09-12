@@ -24,3 +24,25 @@ test("aggregates sessions, forks, transcripts, tools and warnings", async () => 
   assert.ok(out.behavior.anguish > 0);
   assert.equal(out.by.tool.bash.requests, 1);
 });
+
+test("range breakdowns exclude records outside the selected range", async () => {
+  const root = await mkdtemp(join(tmpdir(), "pi-stats-range-"));
+  await mkdir(join(root, "project"), { recursive: true });
+  const header = JSON.stringify({ type: "session", version: 3, id: "s" });
+  const now = Date.now(), old = now - 40 * 86400000;
+  const msg = (id, model, ts, n, content = []) => JSON.stringify({ type: "message", id, timestamp: new Date(ts).toISOString(), message: { role: "assistant", provider: "p-" + model, model, usage: u(n), stopReason: "stop", content } });
+  const tool = [{ type: "toolCall", id: "t1", name: "oldtool", arguments: {} }];
+  await writeFile(join(root, "project", "s.jsonl"), [header, msg("recent", "new-model", now, 10), msg("old", "old-model", old, 5, tool)].join("\n"));
+  const out = await aggregate(root);
+  assert.equal(out.by.model["p-new-model/new-model"].requests, 1);
+  assert.equal(out.by.model["p-old-model/old-model"].requests, 1);
+  assert.equal(out.byRange.all.model["p-old-model/old-model"].requests, 1);
+  assert.equal(out.byRange.today.model["p-new-model/new-model"].requests, 1);
+  assert.equal(out.byRange.today.model["p-old-model/old-model"], undefined);
+  assert.equal(out.byRange.month.model["p-old-model/old-model"], undefined);
+  assert.equal(out.byRange.month.model["p-new-model/new-model"].requests, 1);
+  assert.equal(out.by.tool.oldtool.requests, 1);
+  assert.equal(out.byRange.today.tool.oldtool, undefined);
+  assert.equal(Object.keys(out.daysRange.today).length, 1);
+  assert.ok(out.daysRange.all[new Date(old).toISOString().slice(0, 10)].requests > 0);
+});
