@@ -94,7 +94,7 @@ test("day buckets use local dates consistent with range cutoffs", async () => {
   assert.deepEqual(Object.keys(out.daysRange.today), [local]);
 });
 
-test("project labels hide absolute paths and stay relative to the given root", async () => {
+test("project labels use the decoded cwd path relative to the given root", async () => {
   const root = await mkdtemp(join(tmpdir(), "pi-stats-proj-"));
   await mkdir(join(root, "-Users-someone-secret-project-"), { recursive: true });
   const header = JSON.stringify({ type: "session", version: 3, id: "s" });
@@ -103,9 +103,17 @@ test("project labels hide absolute paths and stay relative to the given root", a
   const out = await aggregate(root);
   const keys = Object.keys(out.by.project);
   assert.equal(keys.length, 1);
-  assert.ok(keys[0].startsWith("project · "), keys[0]);
-  assert.ok(!keys[0].includes("/"), keys[0]);
-  assert.ok(!keys[0].includes("someone"), keys[0]);
+  assert.equal(keys[0], "/Users/someone/secret/project");
+});
+
+test("project label prefers the session cwd over the decoded slug", async () => {
+  const root = await mkdtemp(join(tmpdir(), "pi-stats-cwd-"));
+  await mkdir(join(root, "--Users-someone-real-project--"), { recursive: true });
+  const header = JSON.stringify({ type: "session", version: 3, id: "s", cwd: "/actual/path/with-hyphen" });
+  const asst = JSON.stringify({ type: "message", id: "a1", timestamp: new Date().toISOString(), message: { role: "assistant", provider: "p", model: "m", usage: { input: 1, output: 1, totalTokens: 2 }, stopReason: "stop", content: [] } });
+  await writeFile(join(root, "--Users-someone-real-project--", "s.jsonl"), [header, asst].join("\n"));
+  const out = await aggregate(root);
+  assert.deepEqual(Object.keys(out.by.project), ["/actual/path/with-hyphen"]);
 });
 
 test("unreadable session files are skipped instead of throwing", async () => {
