@@ -101,8 +101,6 @@
     .toggle button { padding: 5px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font: 10px "SFMono-Regular", Consolas, monospace; letter-spacing: .06em; text-transform: uppercase; }
     .toggle button[aria-pressed="true"] { background: var(--lime); color: #11150f; font-weight: 700; }
     .grid.wide { grid-template-columns: minmax(0, 1fr); }
-    .ghost { padding: 9px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--muted); font: 10px "SFMono-Regular", Consolas, monospace; letter-spacing: .06em; text-transform: uppercase; }
-    .ghost:hover { border-color: var(--line-bright); color: var(--ink); }
     .banner { max-width: 1480px; margin: 0 auto 18px; padding: 11px 15px; border: 1px solid #6f3b3b; border-radius: 9px; background: #2a1a1a; color: var(--red); font-size: 12px; }
     .table th[data-sort] { cursor: pointer; user-select: none; white-space: nowrap; }
     .table th[data-sort]:hover { color: var(--ink); }
@@ -168,7 +166,7 @@
       <div id="banner" class="banner" role="alert" hidden></div>
       <header class="topbar">
         <div class="title"><div class="eyebrow">Local observability / pi agent</div><h1>Usage overview</h1><p>Sessions, models, and token spend — without sending your telemetry anywhere.</p></div>
-        <div class="controls"><div class="live"><i aria-hidden="true"></i><span id="synced">SYNCED JUST NOW</span></div><button class="ghost" id="exp-json" type="button">Export JSON</button><button class="ghost" id="exp-csv" type="button">Export CSV</button><label><span class="eyebrow" hidden>Range</span><select id="range" aria-label="Date range"><option value="all">Lifetime</option><option value="today">Today</option><option value="week">Last 7 days</option><option value="month">Last 30 days</option></select></label></div>
+        <div class="controls"><div class="live"><i aria-hidden="true"></i><span id="synced">SYNCED JUST NOW</span></div><label><span class="eyebrow" hidden>Range</span><select id="range" aria-label="Date range"><option value="all">Lifetime</option><option value="today">Today</option><option value="week">Last 7 days</option><option value="month">Last 30 days</option></select></label></div>
       </header>
       <div id="app"></div>
     </section>
@@ -216,12 +214,7 @@
     app.addEventListener('mouseout', e => { const col = e.target.closest('.bar-col'); if (!col) return; if (e.relatedTarget && col.contains(e.relatedTarget)) return; hideTip(col.closest('.chart-plot')); });
     function showTip(col) { const plot = col.closest('.chart-plot'); if (!plot) return; const tip = plot.querySelector('.tip'), line = plot.querySelector('.hoverline'), tpl = col.querySelector('template.tip-data'); if (!tip || !tpl || !line) return; tip.innerHTML = tpl.innerHTML; const pr = plot.getBoundingClientRect(), cr = col.getBoundingClientRect(), cx = cr.left - pr.left + cr.width / 2; line.style.left = cx + 'px'; line.hidden = false; tip.hidden = false; const tw = tip.offsetWidth, th = tip.offsetHeight; let left = cx + 14; if (left + tw > pr.width - 4) left = cx - tw - 14; left = Math.max(4, Math.min(left, pr.width - tw - 4)); let top = (cr.top - pr.top) + (cr.height - th) / 2; top = Math.max(4, Math.min(top, pr.height - th - 4)); tip.style.left = left + 'px'; tip.style.top = top + 'px'; }
     function hideTip(plot) { if (!plot) return; const tip = plot.querySelector('.tip'), line = plot.querySelector('.hoverline'); if (tip) tip.hidden = true; if (line) line.hidden = true; }
-    function download(name, text, mime) { const url = URL.createObjectURL(new Blob([text], { type: mime })), a = document.createElement('a'); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url); }
-    function exportJSON() { download(`pi-stats-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(data, null, 2), 'application/json'); }
-    function exportCSV() { const range = document.querySelector('#range').value, dr = (data.daysRange && data.daysRange[range]) || data.days, keys = ['date','requests','input','output','cacheRead','cacheWrite','tokens','cost'], lines = [keys.join(',')]; for (const [day, v] of Object.entries(dr).sort()) lines.push([day, v.requests, v.input, v.output, v.cacheRead, v.cacheWrite, v.tokens, v.cost].join(',')); download(`pi-stats-${range}-${new Date().toISOString().slice(0,10)}.csv`, lines.join('\n'), 'text/csv'); }
     document.querySelector('#range').onchange = render;
-    document.querySelector('#exp-json').onclick = exportJSON;
-    document.querySelector('#exp-csv').onclick = exportCSV;
     document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
     render(); load(true); setInterval(() => load(), 30000);
   </script>
